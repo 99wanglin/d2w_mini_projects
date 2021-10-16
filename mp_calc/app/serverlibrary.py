@@ -110,69 +110,90 @@ class Queue:
         return self.right_stack.peek()
 
 class EvaluateExpression:
-    operators = "+-*/"
-    check_operators = '+-*/('
+  valid_char = '0123456789+-*/() '
+  operators = '*/-+()'
+  operand = '0123456789'
+  def __init__(self, string=""):
+    self.expression = string
 
-    def __init__(self, data):
-        self.expression = data
-        self.queue = Queue()
+  @property
+  def expression(self):
+    return self._expression
 
-    def applyop(self, opr, val1, val2):
-        val1 = int(val1)
-        val2 = int(val2)
-        if opr == '+':
-          return val1 + val2
-        if opr == '-':
-          return val1 - val2
-        if opr == '*':
-          return val1 * val2
-        if opr == '/':
-          return val1 / val2
-    
-    def check_precedence(self, op1, op2):
-      if op2 == '(':
-          return False
-      if (op1 == '*' or op1 == '/') and (op2 == '-' or op2 == '+'):
-          return False
+  @expression.setter
+  def expression(self, new_expr):
+    for val in new_expr:
+      if val not in self.valid_char:
+        self._expression = ''
+        return
+    else:
+      self._expression = new_expr
+
+  def insert_space(self):
+    temp = ''
+    for i, val in enumerate(self._expression):
+      if val in self.operators:
+        temp = temp + ' ' + val + ' '
       else:
-          return True
+        temp += val
+    return temp
 
-    def evaluate(self):
-      left_stack = Stack()
-      right_stack = Stack()
-      n = len(self.expression)
-      i = 0
-      while i < n:
-          val = self.expression[i]
-          if val.isdigit():
-              if i < n-1:
-                  while self.expression[i+1] not in '+-*/()':
-                      val += self.expression[i+1]
-                      i += 1
-              left_stack.push(val)
-          elif val == '(':
-              right_stack.push('(')
-          elif val in '+-/*':
-              if not right_stack.is_empty and self.check_precedence(val, right_stack._Stack__items[-1]):
-                  right = int(left_stack.pop())
-                  left = int(left_stack.pop())
-                  result = self.applyop(val, left, right)
-              right_stack.push(val)
-          elif val == ')':
-              while right_stack._Stack__items[-1] != '(':
-                  right = int(left_stack.pop())
-                  left = int(left_stack.pop())
-                  result = self.applyop(right_stack.pop(), left, right)
-                  left_stack.push(result)
-              right_stack.pop()
-          i += 1
-      while right_stack._Stack__items != []:
-          right = left_stack.pop()
-          left = left_stack.pop()
-          opr = right_stack.pop()
-          result = self.applyop(opr, left, right)
-          left_stack.push(result)
-      return round(left_stack.pop(), 2)
+  def applyop(self, opr, val1, val2):
+    val1 = float(val1)
+    val2 = float(val2)
+    if opr == '+':
+      return val1 + val2
+    if opr == '-':
+      return val1 - val2
+    if opr == '*':
+      return val1 * val2
+    if opr == '/':
+      return val1 / val2
+
+  def process_operator(self, operand_stack, operator_stack):
+    right = operand_stack.pop()
+    left = operand_stack.pop()
+    opr = operator_stack.pop()
+    result = self.applyop(opr, left, right)
+    operand_stack.push(result)
+    
+  def evaluate(self):
+    operand_stack = Stack()
+    operator_stack = Stack()
+    expression = self.insert_space()
+    tokens = expression.split()
+    n = len(self.expression)
+    i = 0
+    while i < n:
+      val = self.expression[i]
+      if val in self.operand:
+        number = ''
+        j = i
+        while j < n and '0' <= self.expression[j] <= '9':
+          number += self.expression[j]
+          j += 1
+        i = j-1
+        operand_stack.push(number)
+      elif val in '+-':
+        while not operator_stack.is_empty and \
+          operator_stack._Stack__items[-1] not in '()':
+          self.process_operator(operand_stack, operator_stack)
+        operator_stack.push(val)
+      elif val in '*/':
+        while not operator_stack.is_empty and \
+          operator_stack._Stack__items[-1] in '*/':
+          self.process_operator(operand_stack, operator_stack)
+        operator_stack.push(val)
+      elif val == '(':
+        operator_stack.push('(')
+      elif val == ')':
+        while operator_stack._Stack__items[-1] != '(':
+          self.process_operator(operand_stack, operator_stack)
+        operator_stack.pop()
+      i += 1
+    while not operator_stack.is_empty:
+      self.process_operator(operand_stack, operator_stack)
+    return round(operand_stack.pop(), 2)
 
 def get_smallest_three(challenge):
   records = challenge.records
