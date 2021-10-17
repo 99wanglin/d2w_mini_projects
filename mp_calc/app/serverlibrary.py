@@ -139,8 +139,8 @@ class EvaluateExpression:
     return temp
 
   def applyop(self, opr, val1, val2):
-    val1 = float(val1)
-    val2 = float(val2)
+    val1 = int(val1)
+    val2 = int(val2)
     if opr == '+':
       return val1 + val2
     if opr == '-':
@@ -148,7 +148,7 @@ class EvaluateExpression:
     if opr == '*':
       return val1 * val2
     if opr == '/':
-      return val1 / val2
+      return val1 // val2
 
   def process_operator(self, operand_stack, operator_stack):
     right = operand_stack.pop()
